@@ -1,6 +1,7 @@
 \documentclass[conference]{IEEEtran}
 \usepackage{graphicx} % Required for inserting images
 \usepackage{float}
+\usepackage{stfloats}
 \usepackage{cite}
 \usepackage{amsmath}
 \bibliographystyle{IEEEtran}
@@ -70,22 +71,21 @@ For this example, both tasks are assumed to be ready for execution at time 0. Ad
 
 In the background servicing example, as seen in Figure 2, both periodic tasks execute according to their fixed priority schedule. The aperiodic request that arrives at time 5 must wait until the processor becomes idle. Therefore, it is not executed until time 8 resulting in a response time of 4 seconds. Similarly, the next aperiodic request at time 11 is delayed and does not receive any processor time here. 
 This shows that while the deadlines of the periodic tasks are preserved, the response times for aperiodic requests  can become long. In more complex cases with multiple periodic tasks and tighter scheduling, aperiodic tasks might not get any processor time at all.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{background_servicing.png}
-    \caption{Background servicing}
-    \label{fig:polling}
-\end{figure}
-
+\begin{figure*}[!t]         % “figure*” spans both columns
+  \centering
+  \includegraphics[width=\textwidth]{background_servicing.png}
+  \caption{Background servicing}
+  \label{fig:background_servicing}
+\end{figure*}
 
 As seen in Figure~3, Task A begins execution at time 0 for 2 seconds, despite the polling task having the highest priority due to the absence of no aperiodic request. Following Task A, Task B executes for 4 seconds. At time 5, an aperiodic request is made; however, since the polling task's period is over, Task B continues to execute. At time 8, the polling server becomes active again and the aperiodic request is finally executed before Task B continues with its execution. Another aperiodic request is made at time 9, and doesn't get executed until the next polling task period becomes active at time 12. This results in response times of 4 seconds for both requests.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{polling_server.png}
-    \caption{Polling server}
-    \label{fig:polling}
-\end{figure}
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth]{polling_server.png}
+  \caption{Polling server}
+  \label{fig:polling_server}
+\end{figure*}
 
 Although this approach also guarantees some CPU time for aperiodic tasks and preserves periodic task deadlines, the improvement over background servicing is only marginal. Aperiodic requests may still experience delays depending on when they arrive within the polling cycle.
 
@@ -101,27 +101,28 @@ If an aperiodic request later arrives while credit is available, the request imm
 
 To better illustrate this mechanism, consider this example. Two periodic tasks A and B with execution times and periods as shown in Figure~4, are created along with a Priority Exchange server with an execution time of 1 second and 5 seconds. Fig. 5 shows how the tasks are scheduled, and two aperiodic requests are made, first at $t = 6$ and $t = 12$
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{pe_server_example.png}
-    \caption{Task and server configuration for the PE example.}
-    \label{fig:polling}
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=\columnwidth]{pe_server_example.png}
+  \caption{Task and server configuration for the PE example.}
+  \label{fig:pe_server_example}
 \end{figure}
+
 As seen in Figure~5, Task A is scheduled first because no aperiodic requests are pending. It completes its execution, and Task B is subsequently scheduled. The first aperiodic request arrives at $t = 6$ and is serviced immediately. As illustrated in Figure~6, this is possible because a priority exchange occurred at $t = 1$, during which the server's budget was exchanged with Task A, allowing aperiodic time to accumulate at that priority level. Although Task A is ready to execute again at that level, the aperiodic request preempts it using the accumulated credit. The next aperiodic request arrives at $t = 12$, but since no credit is available at that point, it must wait until the Priority Exchange server is replenished at $t = 15$, when it is finally executed.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{pe_server_schedule.png}
-    \caption{Schedule of tasks and aperiodic requests under PE.}
-    \label{fig:polling}
-\end{figure}
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth]{pe_server_schedule.png}
+  \caption{Schedule of tasks and aperiodic requests under PE.}
+  \label{fig:pe_server_schedule}
+\end{figure*}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{PE_server_budget.png}
-    \caption{Server and task-level credit accumulation timeline.}
-    \label{fig:polling}
-\end{figure}
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth]{PE_server_budget.png}
+  \caption{Server and task‐level credit accumulation timeline.}
+  \label{fig:pe_server_budget}
+\end{figure*}
 
 \subsubsection*{Discussion}
 A caveat of the Priority Exchange algorithm can be seen in the example presented earlier. At $t = 12$, an aperiodic request arrives but must wait an additional 3 seconds before it is finally serviced, which resembles the behavior of a polling server. This happens because PE stores credit only when an exchange occurs. If no exchange takes place, then no credit is available, and the request must wait. 
@@ -218,6 +219,15 @@ Execution Time Bound & Each task must respect its worst-case execution time. \ne
 \end{tabular}
 \label{tab:temporal_properties}
 \end{table}
+
+\section{Conclusion}
+This paper examined the Priority Exchange (PE) algorithm as a method for servicing aperiodic tasks under Rate Monotonic Scheduling (RMS) \cite{lehoczky1987enhanced}. Through examples, common approaches like background servicing and polling servers were shown to have long wait and response times for aperiodic requests \cite{sprunt1990aperiodic}. As discussed, the PE server effectively addresses this issue by introducing a high‐priority periodic task that exchanges unused execution time with lower‐priority periodic tasks. By doing so, time is always reserved for aperiodic tasks, since the server accumulates credit at those priority levels.
+
+The paper also outlines how PE can be formally verified in UPPAAL by modeling each task (including the PE server) as a timed automaton and checking key temporal properties such as deadline compliance and mutual exclusion.
+
+Improvements to PE—like the Extended Priority Exchange (EPE) algorithm—have been proposed and could further reduce response times by allowing credit to migrate across all priority levels \cite{sprunt1990aperiodic}. Finally, simulating PE on a real‐time operating system (e.g., FreeRTOS) and measuring its performance under realistic conditions can validate its practical effectiveness. An example implementation is available on GitHub (link below).
+
+In summary, the Priority Exchange server strikes an effective balance between strict aperiodic responsiveness and maintaining the deadlines required for periodic tasks.
 
 
 \bibliography{references}
